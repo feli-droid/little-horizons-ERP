@@ -6,7 +6,7 @@ import java.time.format.DateTimeParseException;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
-/** Reads and validates console input, retrying until the value is valid. */
+/** Reads and validates console input, retrying until the value is valid. Every rejected input is logged. */
 public final class InputValidator {
 
     private static final Scanner SCANNER = new Scanner(System.in);
@@ -22,7 +22,7 @@ public final class InputValidator {
             if (!value.isEmpty()) {
                 return value;
             }
-            System.out.println("[ERROR] Este campo no puede estar vacío.");
+            reject(prompt, "Este campo no puede estar vacío.");
         }
     }
 
@@ -41,9 +41,9 @@ public final class InputValidator {
                 if (value >= min && value <= max) {
                     return value;
                 }
-                System.out.printf("[ERROR] Ingrese un número entre %d y %d.%n", min, max);
+                reject(prompt, String.format("Ingrese un número entre %d y %d.", min, max));
             } catch (NumberFormatException e) {
-                System.out.println("[ERROR] Ingrese un número entero válido.");
+                reject(prompt, "Ingrese un número entero válido.");
             }
         }
     }
@@ -56,9 +56,9 @@ public final class InputValidator {
                 if (value.compareTo(min) >= 0 && value.compareTo(max) <= 0) {
                     return value;
                 }
-                System.out.printf("[ERROR] El valor debe estar entre %s y %s.%n", min, max);
+                reject(prompt, String.format("El valor debe estar entre %s y %s.", min, max));
             } catch (NumberFormatException e) {
-                System.out.println("[ERROR] Ingrese un número válido.");
+                reject(prompt, "Ingrese un número válido.");
             }
         }
     }
@@ -69,7 +69,7 @@ public final class InputValidator {
             try {
                 return LocalDate.parse(SCANNER.nextLine().trim());
             } catch (DateTimeParseException e) {
-                System.out.println("[ERROR] Fecha inválida. Use el formato AAAA-MM-DD.");
+                reject(prompt, "Fecha inválida. Use el formato AAAA-MM-DD.");
             }
         }
     }
@@ -80,7 +80,7 @@ public final class InputValidator {
             if (EMAIL.matcher(value).matches()) {
                 return value;
             }
-            System.out.println("[ERROR] Correo electrónico inválido.");
+            reject(prompt, "Correo electrónico inválido.");
         }
     }
 
@@ -94,7 +94,7 @@ public final class InputValidator {
             if (value.equals("N")) {
                 return false;
             }
-            System.out.println("[ERROR] Responda S o N.");
+            reject(prompt, "Responda S o N.");
         }
     }
 
@@ -102,5 +102,11 @@ public final class InputValidator {
     public static void waitForEnter() {
         System.out.print("\nPresione Enter para continuar...");
         SCANNER.nextLine();
+    }
+
+    /** Shows the error to the user and records it in the log. */
+    private static void reject(String prompt, String reason) {
+        ErrorLogger.warn("Invalid input at '" + prompt.trim() + "': " + reason);
+        System.out.println("[ERROR] " + reason);
     }
 }
