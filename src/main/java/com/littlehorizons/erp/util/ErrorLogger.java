@@ -7,7 +7,7 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-/** Writes error and info messages to error_log.txt. */
+/** Writes error, warning and info messages to error_log.txt. */
 public final class ErrorLogger {
 
     private static final Path LOG_FILE = Path.of("error_log.txt");
@@ -15,10 +15,17 @@ public final class ErrorLogger {
 
     private ErrorLogger() { }
 
+    /** Technical failures (database, files, unexpected exceptions). */
     public static void error(String message, Throwable cause) {
         write("ERROR", message + (cause != null ? " | " + cause : ""));
     }
 
+    /** Input or business rules rejected by the system (not a system failure). */
+    public static void warn(String message) {
+        write("WARN", message);
+    }
+
+    /** Normal application events. */
     public static void info(String message) {
         write("INFO", message);
     }

@@ -9,6 +9,7 @@ import com.littlehorizons.erp.model.Grade;
 import com.littlehorizons.erp.model.Guardian;
 import com.littlehorizons.erp.model.Student;
 import com.littlehorizons.erp.model.StudentStatus;
+import com.littlehorizons.erp.util.ErrorLogger;
 import com.littlehorizons.erp.util.InputValidator;
 
 import java.time.LocalDate;
@@ -49,7 +50,10 @@ public class StudentView {
                     case 7 -> showSummary();
                     default -> back = option == EXIT_OPTION;
                 }
-            } catch (BusinessException | DataAccessException e) {
+            } catch (BusinessException e) {
+                ErrorLogger.warn("Business rule rejected: " + e.getMessage());
+                System.out.println("\n[ERROR] " + e.getMessage());
+            } catch (DataAccessException e) {
                 System.out.println("\n[ERROR] " + e.getMessage());
             }
             if (!back) {
@@ -245,6 +249,7 @@ public class StudentView {
                 controller.validateBirthDate(type, date);
                 return date;
             } catch (BusinessException e) {
+                ErrorLogger.warn("Validation failed: " + e.getMessage());
                 System.out.println("[ERROR] " + e.getMessage());
             }
         }
@@ -257,6 +262,7 @@ public class StudentView {
                 validator.validate(value);
                 return value;
             } catch (BusinessException e) {
+                ErrorLogger.warn("Validation failed: " + e.getMessage());
                 System.out.println("[ERROR] " + e.getMessage());
             }
         }
@@ -272,6 +278,7 @@ public class StudentView {
                 validator.validate(value);
                 return value;
             } catch (BusinessException e) {
+                ErrorLogger.warn("Validation failed: " + e.getMessage());
                 System.out.println("[ERROR] " + e.getMessage());
             }
         }
