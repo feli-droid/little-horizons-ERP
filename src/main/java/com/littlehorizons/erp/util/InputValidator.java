@@ -14,6 +14,7 @@ public final class InputValidator {
 
     private InputValidator() { }
 
+    /** Reads a required, non-empty text. */
     public static String readText(String prompt) {
         while (true) {
             System.out.print(prompt);
@@ -23,6 +24,13 @@ public final class InputValidator {
             }
             System.out.println("[ERROR] Este campo no puede estar vacío.");
         }
+    }
+
+    /** Reads an optional text; returns null when the user just presses Enter. */
+    public static String readOptionalText(String prompt) {
+        System.out.print(prompt);
+        String value = SCANNER.nextLine().trim();
+        return value.isEmpty() ? null : value;
     }
 
     public static int readInt(String prompt, int min, int max) {
@@ -80,9 +88,19 @@ public final class InputValidator {
         while (true) {
             System.out.print(prompt + " (S/N): ");
             String value = SCANNER.nextLine().trim().toUpperCase();
-            if (value.equals("S")) return true;
-            if (value.equals("N")) return false;
+            if (value.equals("S")) {
+                return true;
+            }
+            if (value.equals("N")) {
+                return false;
+            }
             System.out.println("[ERROR] Responda S o N.");
         }
+    }
+
+    /** Pauses until the user presses Enter. */
+    public static void waitForEnter() {
+        System.out.print("\nPresione Enter para continuar...");
+        SCANNER.nextLine();
     }
 }

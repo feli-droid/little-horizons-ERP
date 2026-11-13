@@ -7,7 +7,6 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
-/** Singleton that provides database connections using settings from db.properties. */
 public final class DatabaseConnection {
 
     private static final String CONFIG_FILE = "config.txt";
