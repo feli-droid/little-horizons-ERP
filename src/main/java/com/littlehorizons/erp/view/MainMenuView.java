@@ -8,9 +8,13 @@ public class MainMenuView {
     private static final int EXIT_OPTION = 8;
 
     private final StudentView studentView;
+    private final AcademicView academicView;
+    private final TeacherView teacherView;
 
-    public MainMenuView(StudentView studentView) {
+    public MainMenuView(StudentView studentView, AcademicView academicView, TeacherView teacherView) {
         this.studentView = studentView;
+        this.academicView = academicView;
+        this.teacherView = teacherView;
     }
 
     public void run() {
@@ -20,6 +24,8 @@ public class MainMenuView {
             int option = InputValidator.readInt("Seleccione una opción: ", 1, EXIT_OPTION);
             switch (option) {
                 case 1 -> studentView.run();
+                case 2 -> academicView.run();
+                case 3 -> teacherView.run();
                 case EXIT_OPTION -> exit = true;
                 default -> {
                     System.out.println("\n[INFO] Este módulo aún está en desarrollo.");

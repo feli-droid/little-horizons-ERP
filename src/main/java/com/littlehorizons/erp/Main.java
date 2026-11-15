@@ -1,16 +1,28 @@
 package com.littlehorizons.erp;
 
+import com.littlehorizons.erp.controller.AcademicController;
 import com.littlehorizons.erp.controller.StudentController;
+import com.littlehorizons.erp.controller.TeacherController;
+import com.littlehorizons.erp.dao.AcademicDao;
+import com.littlehorizons.erp.dao.AssignmentDao;
+import com.littlehorizons.erp.dao.AttendanceDao;
 import com.littlehorizons.erp.dao.GradeDao;
 import com.littlehorizons.erp.dao.GuardianDao;
+import com.littlehorizons.erp.dao.JdbcAcademicDao;
+import com.littlehorizons.erp.dao.JdbcAssignmentDao;
+import com.littlehorizons.erp.dao.JdbcAttendanceDao;
 import com.littlehorizons.erp.dao.JdbcGradeDao;
 import com.littlehorizons.erp.dao.JdbcGuardianDao;
 import com.littlehorizons.erp.dao.JdbcStudentDao;
+import com.littlehorizons.erp.dao.JdbcTeacherDao;
 import com.littlehorizons.erp.dao.StudentDao;
+import com.littlehorizons.erp.dao.TeacherDao;
 import com.littlehorizons.erp.util.DatabaseConnection;
 import com.littlehorizons.erp.util.ErrorLogger;
+import com.littlehorizons.erp.view.AcademicView;
 import com.littlehorizons.erp.view.MainMenuView;
 import com.littlehorizons.erp.view.StudentView;
+import com.littlehorizons.erp.view.TeacherView;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -28,11 +40,17 @@ public class Main {
         GuardianDao guardianDao = new JdbcGuardianDao();
         StudentDao studentDao = new JdbcStudentDao(guardianDao);
         GradeDao gradeDao = new JdbcGradeDao();
+        TeacherDao teacherDao = new JdbcTeacherDao();
+        AssignmentDao assignmentDao = new JdbcAssignmentDao();
+        AcademicDao academicDao = new JdbcAcademicDao();
+        AttendanceDao attendanceDao = new JdbcAttendanceDao();
 
-        StudentController studentController = new StudentController(studentDao, guardianDao, gradeDao);
-        StudentView studentView = new StudentView(studentController);
+        StudentView studentView = new StudentView(new StudentController(studentDao, guardianDao, gradeDao));
+        AcademicView academicView = new AcademicView(new AcademicController(
+                academicDao, attendanceDao, assignmentDao, teacherDao, studentDao, gradeDao));
+        TeacherView teacherView = new TeacherView(new TeacherController(teacherDao, assignmentDao));
 
-        new MainMenuView(studentView).run();
+        new MainMenuView(studentView, academicView, teacherView).run();
         ErrorLogger.info("Application finished");
     }
 
