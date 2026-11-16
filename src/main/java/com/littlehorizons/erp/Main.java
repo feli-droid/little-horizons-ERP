@@ -3,6 +3,8 @@ package com.littlehorizons.erp;
 import com.littlehorizons.erp.controller.AcademicController;
 import com.littlehorizons.erp.controller.ClubController;
 import com.littlehorizons.erp.controller.EventController;
+import com.littlehorizons.erp.controller.LoanController;
+import com.littlehorizons.erp.controller.ResourceController;
 import com.littlehorizons.erp.controller.StudentController;
 import com.littlehorizons.erp.controller.TeacherController;
 import com.littlehorizons.erp.dao.AcademicDao;
@@ -19,8 +21,12 @@ import com.littlehorizons.erp.dao.JdbcClubDao;
 import com.littlehorizons.erp.dao.JdbcEventDao;
 import com.littlehorizons.erp.dao.JdbcGradeDao;
 import com.littlehorizons.erp.dao.JdbcGuardianDao;
+import com.littlehorizons.erp.dao.JdbcLoanDao;
+import com.littlehorizons.erp.dao.JdbcResourceDao;
 import com.littlehorizons.erp.dao.JdbcStudentDao;
 import com.littlehorizons.erp.dao.JdbcTeacherDao;
+import com.littlehorizons.erp.dao.LoanDao;
+import com.littlehorizons.erp.dao.ResourceDao;
 import com.littlehorizons.erp.dao.StudentDao;
 import com.littlehorizons.erp.dao.TeacherDao;
 import com.littlehorizons.erp.util.DatabaseConnection;
@@ -30,6 +36,7 @@ import com.littlehorizons.erp.view.ClubView;
 import com.littlehorizons.erp.view.EventView;
 import com.littlehorizons.erp.view.ExtracurricularView;
 import com.littlehorizons.erp.view.MainMenuView;
+import com.littlehorizons.erp.view.ResourceView;
 import com.littlehorizons.erp.view.StudentView;
 import com.littlehorizons.erp.view.TeacherView;
 
@@ -55,6 +62,8 @@ public class Main {
         AttendanceDao attendanceDao = new JdbcAttendanceDao();
         ClubDao clubDao = new JdbcClubDao();
         EventDao eventDao = new JdbcEventDao();
+        ResourceDao resourceDao = new JdbcResourceDao();
+        LoanDao loanDao = new JdbcLoanDao();
 
         StudentView studentView = new StudentView(new StudentController(studentDao, guardianDao, gradeDao));
         AcademicView academicView = new AcademicView(new AcademicController(
@@ -63,8 +72,10 @@ public class Main {
         ExtracurricularView extracurricularView = new ExtracurricularView(
                 new ClubView(new ClubController(clubDao, teacherDao, studentDao)),
                 new EventView(new EventController(eventDao, teacherDao, studentDao)));
+        ResourceView resourceView = new ResourceView(new ResourceController(resourceDao),
+                new LoanController(loanDao, resourceDao, studentDao, teacherDao));
 
-        new MainMenuView(studentView, academicView, teacherView, extracurricularView).run();
+        new MainMenuView(studentView, academicView, teacherView, extracurricularView, resourceView).run();
         ErrorLogger.info("Application finished");
     }
 

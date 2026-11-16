@@ -11,13 +11,15 @@ public class MainMenuView {
     private final AcademicView academicView;
     private final TeacherView teacherView;
     private final ExtracurricularView extracurricularView;
+    private final ResourceView resourceView;
 
     public MainMenuView(StudentView studentView, AcademicView academicView, TeacherView teacherView,
-                        ExtracurricularView extracurricularView) {
+                        ExtracurricularView extracurricularView, ResourceView resourceView) {
         this.studentView = studentView;
         this.academicView = academicView;
         this.teacherView = teacherView;
         this.extracurricularView = extracurricularView;
+        this.resourceView = resourceView;
     }
 
     public void run() {
@@ -30,6 +32,7 @@ public class MainMenuView {
                 case 2 -> academicView.run();
                 case 3 -> teacherView.run();
                 case 4 -> extracurricularView.run();
+                case 6 -> resourceView.run();
                 case EXIT_OPTION -> exit = true;
                 default -> {
                     System.out.println("\n[INFO] Este módulo aún está en desarrollo.");
