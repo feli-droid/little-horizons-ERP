@@ -1,4 +1,7 @@
 package com.littlehorizons.erp.model;
 
-public class MonthlyIncome {
+import java.math.BigDecimal;
+
+/** Total collected in one month (format yyyy-MM) and the number of payments. */
+public record MonthlyIncome(String month, int payments, BigDecimal total) {
 }
