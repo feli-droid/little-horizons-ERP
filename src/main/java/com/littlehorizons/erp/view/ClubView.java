@@ -78,7 +78,7 @@ public class ClubView {
     private void registerClub() throws BusinessException {
         System.out.println("\n--- Registro de club ---");
         String name = ConsoleForm.readField("Nombre del club: ", controller::validateClubName);
-        String description = InputValidator.readOptionalText("Descripción (opcional): ");
+        String description = ConsoleForm.readOptionalField("Descripción (opcional): ", controller::validateClubDescription);
         Teacher supervisor = controller.getSupervisor(InputValidator.readText("Documento del profesor encargado: "));
         int capacity = InputValidator.readInt("Cupo máximo (1 a " + ClubController.MAX_CAPACITY + "): ", 1, ClubController.MAX_CAPACITY);
         String schedule = InputValidator.readOptionalText("Horario de reunión (ej. Martes 3-5 PM, opcional): ");
