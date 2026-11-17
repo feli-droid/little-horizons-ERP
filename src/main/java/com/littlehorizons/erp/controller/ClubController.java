@@ -57,8 +57,18 @@ public class ClubController {
         if (clean.length() < MIN_NAME_LENGTH || clean.length() > MAX_NAME_LENGTH) {
             throw new BusinessException("El nombre debe tener entre " + MIN_NAME_LENGTH + " y " + MAX_NAME_LENGTH + " caracteres.");
         }
+        if (clean.chars().noneMatch(Character::isLetter)) {
+            throw new BusinessException("El nombre debe contener letras; no puede ser solo números o símbolos.");
+        }
         if (clubDao.findByName(clean).isPresent()) {
             throw new BusinessException("Ya existe un club llamado " + clean + ".");
+        }
+    }
+
+    /** A description is optional, but when given it must contain letters (not only digits or symbols). */
+    public void validateClubDescription(String description) throws BusinessException {
+        if (description.trim().chars().noneMatch(Character::isLetter)) {
+            throw new BusinessException("La descripción debe contener letras; no puede ser solo números o símbolos.");
         }
     }
 

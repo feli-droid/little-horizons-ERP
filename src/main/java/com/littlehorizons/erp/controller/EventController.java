@@ -61,6 +61,9 @@ public class EventController {
         if (length < MIN_NAME_LENGTH || length > MAX_NAME_LENGTH) {
             throw new BusinessException("El nombre debe tener entre " + MIN_NAME_LENGTH + " y " + MAX_NAME_LENGTH + " caracteres.");
         }
+        if (name.trim().chars().noneMatch(Character::isLetter)) {
+            throw new BusinessException("El nombre debe contener letras; no puede ser solo números o símbolos.");
+        }
     }
 
     public void validateEventDate(LocalDate date) throws BusinessException {
