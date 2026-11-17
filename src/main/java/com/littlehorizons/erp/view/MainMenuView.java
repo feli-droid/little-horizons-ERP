@@ -11,15 +11,20 @@ public class MainMenuView {
     private final AcademicView academicView;
     private final TeacherView teacherView;
     private final ExtracurricularView extracurricularView;
+    private final FinancialView financialView;
     private final ResourceView resourceView;
+    private final ReportView reportView;
 
     public MainMenuView(StudentView studentView, AcademicView academicView, TeacherView teacherView,
-                        ExtracurricularView extracurricularView, ResourceView resourceView) {
+                        ExtracurricularView extracurricularView, FinancialView financialView,
+                        ResourceView resourceView, ReportView reportView) {
         this.studentView = studentView;
         this.academicView = academicView;
         this.teacherView = teacherView;
         this.extracurricularView = extracurricularView;
+        this.financialView = financialView;
         this.resourceView = resourceView;
+        this.reportView = reportView;
     }
 
     public void run() {
@@ -32,12 +37,10 @@ public class MainMenuView {
                 case 2 -> academicView.run();
                 case 3 -> teacherView.run();
                 case 4 -> extracurricularView.run();
+                case 5 -> financialView.run();
                 case 6 -> resourceView.run();
+                case 7 -> reportView.run();
                 case EXIT_OPTION -> exit = true;
-                default -> {
-                    System.out.println("\n[INFO] Este módulo aún está en desarrollo.");
-                    InputValidator.waitForEnter();
-                }
             }
         }
         System.out.println("\nGracias por usar el ERP del Colegio Little Horizons. ¡Hasta pronto!");
