@@ -38,7 +38,10 @@ build/
 .DS_Store
 
 .idea/
+*.iml
+.vscode/
 target/
+out/
 config.txt
 error_log.txt
 invoices/

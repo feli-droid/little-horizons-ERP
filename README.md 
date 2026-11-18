@@ -1,0 +1,218 @@
+# Little Horizons ERP
+
+Console ERP for the school **Colegio Internacional Little Horizons**, written in Java 17 with an MVC architecture and a MySQL 8 database.
+
+## Description
+
+**Purpose.** A single console application that centralizes the academic, extracurricular, financial and resource management of a school.
+
+**Problems it solves.**
+- Student, guardian and teacher records live in one consistent database instead of loose spreadsheets.
+- Grades, averages and attendance are validated and calculated automatically (Colombian scale 0.0 to 5.0).
+- Club capacity, event participation and podium positions are controlled with business rules.
+- Payments, discounts, debtors and invoices are traceable, and every invoice gets a simulated CUFE and QR content.
+- Inventory and loans (students and teachers) are controlled, with automatic overdue detection.
+
+**Main features.** Students and guardians, teachers and schedules, grades, averages and attendance, clubs and events, payment concepts, charges, payments and invoices, debtors report, resource inventory and loans, and a reports and statistics module.
+
+## Authors
+
+| Name | Email |
+|------|-------|
+| [Andres Felipe Rojas Avendaño] | leidykatherinerojas393@gmail.com |
+
+Project developed as a training project (individual delivery).
+
+## Technologies
+
+| Item | Detail |
+|------|--------|
+| Language | Java 17 |
+| Build tool | Maven 3 |
+| IDE | IntelliJ IDEA Community |
+| Database | MySQL 8.0 (run with Docker Compose in development) |
+| DB client | DBeaver |
+| External library | `mysql-connector-j` 8.4.0 (JDBC driver) |
+| Version control | Git and GitHub (private repository) |
+
+## Prerequisites
+
+- **JDK 17** or higher.
+- **Maven 3.8+** (bundled with IntelliJ IDEA).
+- **MySQL 8.0 or higher** (required: the schema uses `CHECK` constraints and a generated column, which need MySQL 8.0.16+).
+- Docker (optional, only to run MySQL in a container).
+
+## Database configuration
+
+### 1. Create the database
+
+The whole schema (DDL) and the test data (DML, 30+ rows in the main tables) are in `docs/database.sql`. The script creates the `erp_little_horizons` database from scratch.
+
+```bash
+mysql -u root -p --default-character-set=utf8mb4 < docs/database.sql
+```
+
+With Docker:
+
+```bash
+docker exec -i mysql_container mysql -uroot -p<password> --default-character-set=utf8mb4 < docs/database.sql
+```
+
+### 2. Configure credentials
+
+Copy `config.example.txt` to `config.txt` in the project root (next to `pom.xml`) and edit the three keys:
+
+```
+db.url=jdbc:mysql://localhost:3307/erp_little_horizons?useUnicode=true&characterEncoding=utf8&serverTimezone=America/Bogota
+db.user=root
+db.password=your_password_here
+```
+
+`config.txt` is listed in `.gitignore` so the password is never committed.
+
+### 3. Install the JDBC driver
+
+Nothing to install by hand: Maven downloads `mysql-connector-j` from the dependency declared in `pom.xml`. In IntelliJ, use *Maven > Reload All Maven Projects* if the driver is not found.
+
+## Installation and execution
+
+```bash
+# 1. Clone
+git clone https://github.com/<user>/little-horizons-erp.git
+cd little-horizons-erp
+
+# 2. Open the folder in IntelliJ IDEA (File > Open) and let Maven import the project.
+
+# 3. Compile
+mvn clean compile
+
+# 4. Run (from the project root, so config.txt is found)
+mvn exec:java -Dexec.mainClass=com.littlehorizons.erp.Main
+```
+
+You can also run `Main.java` directly from IntelliJ. The working directory must be the project root.
+
+## Project structure
+
+```
+little-horizons-erp/
+├── docs/database.sql
+├── config.example.txt
+├── pom.xml
+└── src/main/java/com/littlehorizons/erp/
+    ├── Main.java
+    ├── model/
+    ├── view/
+    ├── controller/
+    ├── dao/
+    ├── exception/
+    └── util/
+```
+
+**MVC.** The user only talks to the **view**; the view calls a **controller**; the controller applies business rules and uses a **DAO** to reach the database; data travels in **model** objects.
+
+| Package | Responsibility |
+|---------|----------------|
+| `model` | Domain entities (classes, records and enums such as `Student`, `Charge`, `Invoice`, `PaymentMethod`). No logic of I/O. |
+| `view` | Console menus and input prompts (`StudentView`, `FinancialView`, `ReportView`...). They never contain SQL or business rules. |
+| `controller` | Business rules and validation (`PaymentController`, `LoanController`...). They throw `BusinessException` when a rule is broken. |
+| `dao` | Data access. One interface per aggregate (`StudentDao`) and one JDBC implementation (`JdbcStudentDao`). All SQL lives here. |
+| `exception` | `BusinessException` (checked, rule rejected) and `DataAccessException` (unchecked, wraps `SQLException`). |
+| `util` | Shared helpers: `DatabaseConnection`, `ErrorLogger`, `InputValidator`, `Validation`, `Money`, `CufeGenerator`, `InvoiceFileWriter`. |
+
+The extra `dao/` and `exception/` packages are allowed by the project statement (internal packages may be added while respecting MVC).
+
+## Design principles and patterns
+
+### SOLID, with examples from this code
+
+- **S - Single Responsibility.** Each class has one reason to change. `InvoiceFileWriter` only writes the invoice text file; `CufeGenerator` only computes the CUFE hash; `InvoiceController` builds the invoice (range check, VAT, CUFE) and `JdbcInvoiceDao` only stores it.
+- **O - Open/Closed.** Behaviour is extended by adding values or classes, not by editing consumers. Adding a new payment method means adding one constant to the `PaymentMethod` enum (it carries its own `dbValue` and `fromDb`); the DAOs and views that list `PaymentMethod.values()` keep working unchanged.
+- **L - Liskov Substitution.** Any `JdbcXxxDao` can replace its interface without the controller noticing: `PaymentController` only calls `PaymentDao` methods, so a test double or another database implementation can be injected with the same behaviour contract.
+- **I - Interface Segregation.** DAO interfaces are small and specific (`GradeDao`, `GuardianDao`, `StudentDao`, `ReportDao`...) instead of one giant `Dao`. `ReportController` depends only on the read-only `ReportDao` and cannot modify data.
+- **D - Dependency Inversion.** Controllers depend on DAO **interfaces**, not on JDBC classes. The concrete objects are created in one place, the composition root `Main`, and injected through constructors, e.g. `new PaymentController(paymentDao, invoiceController, studentDao, guardianDao)`.
+
+### Design patterns
+
+| Pattern | Where | Why |
+|---------|-------|-----|
+| **Singleton** | `DatabaseConnection` | One place reads `config.txt` and opens connections; the configuration is loaded once. |
+| **DAO** | `dao/` package | Isolates SQL from business rules and lets the database be replaced without touching controllers. |
+| **MVC** | `model` / `view` / `controller` | Separates console interaction, business rules and data. |
+| **Dependency Injection (manual)** | `Main` | Wires views, controllers and DAOs without a framework. |
+
+### Other technical practices
+
+- `PreparedStatement` in every query (no string concatenation of user input).
+- `try-with-resources` for every `Connection`, `PreparedStatement` and `ResultSet`.
+- Lambdas and Streams in controllers (`ReportController`, `PaymentController`) and views.
+- Transactions (`commit`/`rollback`) for multi-table operations: student plus guardian registration, payment plus invoice, loans. `SELECT ... FOR UPDATE` protects club capacity and resource availability.
+- `BigDecimal` for money and grades.
+
+## Main features
+
+**Students and guardians.** Register, search, update and withdraw students; at least one guardian per student (saved in one transaction); document type consistent with age (RC up to 7, TI from 7, CC from 18).
+
+**Teachers.** Register and manage teachers, subject assignments and weekly schedule; conflict detection for teachers and groups, school hours 06:00 to 17:00, weekly hour limit.
+
+**Academic.** Grades from 0.0 to 5.0 with one decimal per period, subject and period averages, students needing support (grade under 3.0), attendance records and weekly absence alerts (more than 3).
+
+**Extracurricular.** Clubs with maximum capacity checked inside a transaction, memberships; events with participants, roles and unique podium positions (events only accept participants once they are past or today).
+
+**Financial.** Payment concept catalog, charges per student with percentage discount (with required reason), multi-concept payments (one invoice per payment), receipts `REC-YYYY-NNNNNN`, payment history by student and by guardian, debtors report (pending for more than one month), electronic-style invoice as a `.txt` file with simulated CUFE (SHA-384) and QR content.
+
+**Resources.** Inventory by category and status; loans for students (limit 3) and teachers (limit 5) in separate tables; 1 to 30 days; no new loan if the borrower has an overdue one; overdue loans are marked automatically.
+
+**Reports and statistics.** General summary, top students, students at academic risk, average by grade, attendance by grade, club occupancy, monthly income and inventory status.
+
+## Error handling and logs
+
+- **Log file:** `error_log.txt`, created in the folder where the application runs (project root). It is plain text, written by `ErrorLogger` without any logging library. It is ignored by Git.
+- **Format:** `[yyyy-MM-dd HH:mm:ss] [LEVEL] message`.
+- **Levels:**
+  - `INFO`: application events (application start and finish).
+  - `WARN`: every rejected user input or broken business rule, with the prompt and the reason (the typed value is not stored).
+  - `ERROR`: technical failures such as SQL errors, with the exception.
+- **Strategy:** DAOs catch `SQLException`, log an `ERROR` and throw `DataAccessException` (unchecked) with a friendly message; controllers throw `BusinessException` (checked) for rule violations; views catch both and show a clear `[ERROR]` message. The application never shows a stack trace to the user.
+
+Sample lines:
+
+```
+[2026-11-17 14:08:31] [INFO] Application started
+[2026-11-17 14:08:32] [WARN] Invalid input at 'Valor base en pesos:': Ingrese un número válido.
+[2026-11-17 14:08:38] [WARN] Invalid input at 'Seleccione una opción:': Ingrese un número entre 0 y 10.
+[2026-11-17 14:09:10] [ERROR] Database connection test failed | java.sql.SQLException: ...
+[2026-11-17 14:09:15] [INFO] Application finished
+```
+
+## Deviations from the project statement
+
+Agreed with the instructor:
+
+1. **Invoice in `.txt` instead of PDF.** The invoice is written to `invoices/factura_NNNNNN.txt` (header, school data, resolution, client, lines, subtotal, VAT, total, CUFE and QR content).
+2. **Plain-text logs.** `error_log.txt` is written directly, with no logging library.
+
+## Screenshots
+
+Add screenshots of the main menu, a payment with its invoice and a report here (folder `docs/screenshots/`).
+
+## Known issues and limitations
+
+- Single-user console application; no authentication or roles.
+- CUFE, QR and invoice resolution are simulated, with no connection to the tax authority (DIAN).
+- Reports use the current calendar year as the academic year.
+
+## Future improvements
+
+- Graphical or web interface.
+- Real electronic invoicing and PDF export.
+- User accounts with roles (administrator, teacher, guardian).
+- Automated unit tests with mocked DAOs (thanks to the DAO interfaces).
+
+## License
+
+Academic project. All rights reserved by the author; not for commercial use.
+
+## Contact
+
+leidykatherinerojas393@gmail.com
