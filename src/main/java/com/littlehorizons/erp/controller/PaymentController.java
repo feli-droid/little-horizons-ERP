@@ -88,8 +88,27 @@ public class PaymentController {
         if (!CONCEPT_CODE.matcher(code.trim()).matches()) {
             throw new BusinessException("El código debe tener de 2 a 20 letras, números o guion bajo (ej. TUTORIA).");
         }
+        if (code.chars().noneMatch(Character::isLetter)) {
+            throw new BusinessException("El código debe contener letras; no puede ser solo números.");
+        }
         if (paymentDao.findConceptByCode(code.trim().toUpperCase()).isPresent()) {
             throw new BusinessException("Ya existe un concepto con el código " + code.trim().toUpperCase() + ".");
+        }
+    }
+
+    public void validateConceptName(String name) throws BusinessException {
+        if (name.trim().length() < 3) {
+            throw new BusinessException("El concepto debe tener al menos 3 caracteres.");
+        }
+        if (name.chars().noneMatch(Character::isLetter)) {
+            throw new BusinessException("El concepto debe contener letras; no puede ser solo números o símbolos.");
+        }
+    }
+
+    /** A description is optional, but when given it must contain letters. */
+    public void validateConceptDescription(String description) throws BusinessException {
+        if (description.chars().noneMatch(Character::isLetter)) {
+            throw new BusinessException("La descripción debe contener letras; no puede ser solo números o símbolos.");
         }
     }
 
@@ -102,9 +121,7 @@ public class PaymentController {
     public int registerConcept(String code, String name, String description, BigDecimal amount, boolean recurring)
             throws BusinessException {
         validateConceptCode(code);
-        if (name.trim().length() < 3) {
-            throw new BusinessException("El nombre del concepto debe tener al menos 3 caracteres.");
-        }
+        validateConceptName(name);
         validateAmount(amount);
         return paymentDao.insertConcept(code.trim().toUpperCase(), name.trim(), description,
                 amount.setScale(2, RoundingMode.HALF_UP), recurring);

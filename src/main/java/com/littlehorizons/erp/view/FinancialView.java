@@ -105,8 +105,8 @@ public class FinancialView {
     private void registerConcept() throws BusinessException {
         System.out.println("\n--- Nuevo concepto de pago ---");
         String code = ConsoleForm.readField("Código (ej. TUTORIA): ", paymentController::validateConceptCode);
-        String name = InputValidator.readText("Nombre: ");
-        String description = InputValidator.readOptionalText("Descripción (opcional): ");
+        String name = ConsoleForm.readField("Concepto (ej. Tutoría): ", paymentController::validateConceptName);
+        String description = ConsoleForm.readOptionalField("Descripción (opcional): ", paymentController::validateConceptDescription);
         BigDecimal amount = readAmount("Valor base en pesos: ");
         boolean recurring = InputValidator.confirm("¿Es un cobro recurrente (mensual)?");
         int id = paymentController.registerConcept(code, name, description, amount, recurring);
