@@ -1,8 +1,10 @@
 package com.littlehorizons.erp.view;
 
+import com.littlehorizons.erp.controller.AttendanceImportController;
 import com.littlehorizons.erp.controller.ReportController;
+import com.littlehorizons.erp.exception.BusinessException;
 import com.littlehorizons.erp.exception.DataAccessException;
-import com.littlehorizons.erp.model.AttendanceStat;
+import com.littlehorizons.erp.model.AttendanceSummary;
 import com.littlehorizons.erp.model.ClubOccupancy;
 import com.littlehorizons.erp.model.MonthlyIncome;
 import com.littlehorizons.erp.model.StudentRanking;
@@ -17,11 +19,15 @@ import java.util.Map;
 public class ReportView {
 
     private static final int EXIT_OPTION = 0;
+    private static final int MIN_YEAR = 2000;
+    private static final int MAX_YEAR = 2100;
 
     private final ReportController reportController;
+    private final AttendanceImportController attendanceImportController;
 
-    public ReportView(ReportController reportController) {
+    public ReportView(ReportController reportController, AttendanceImportController attendanceImportController) {
         this.reportController = reportController;
+        this.attendanceImportController = attendanceImportController;
     }
 
     public void run() {
@@ -35,7 +41,7 @@ public class ReportView {
                     case 2 -> showTopStudents();
                     case 3 -> showStudentsAtRisk();
                     case 4 -> showAverageByGrade();
-                    case 5 -> showAttendance();
+                    case 5 -> showAttendanceSummary();
                     case 6 -> showClubOccupancy();
                     case 7 -> showIncome();
                     case 8 -> showResources();
@@ -59,7 +65,7 @@ public class ReportView {
         System.out.println("2. Mejores estudiantes (ranking por promedio)");
         System.out.println("3. Estudiantes en riesgo académico (promedio < 3.0)");
         System.out.println("4. Promedio académico por grado");
-        System.out.println("5. Asistencia por grado");
+        System.out.println("5. Resumen de asistencia");
         System.out.println("6. Ocupación de los clubes");
         System.out.println("7. Ingresos por mes");
         System.out.println("8. Estado del inventario de recursos");
@@ -115,17 +121,29 @@ public class ReportView {
         averages.forEach((grade, average) -> System.out.printf("  %-16s %s%n", grade, average));
     }
 
-    private void showAttendance() {
-        List<AttendanceStat> stats = reportController.attendanceByGrade();
-        System.out.println("\nAsistencia por grado (presente o tardanza sobre el total de registros):");
-        if (stats.isEmpty()) {
-            System.out.println("  No hay asistencia registrada.");
+    private void showAttendanceSummary() {
+        int year = InputValidator.readInt("Año del resumen: ", MIN_YEAR, MAX_YEAR);
+        List<AttendanceSummary> summary = reportController.attendanceSummary(year);
+        System.out.println("\nResumen de asistencia de " + year + " (registros por estudiante):");
+        if (summary.isEmpty()) {
+            System.out.println("  No hay asistencia registrada en ese año.");
             return;
         }
-        System.out.printf("%-16s %-10s %-10s %s%n", "Grado", "Registros", "Asistió", "% asistencia");
-        System.out.println("-".repeat(52));
-        stats.forEach(s -> System.out.printf("%-16s %-10d %-10d %.1f%%%n", s.gradeName(), s.totalRecords(),
-                s.attended(), s.percentage()));
+        System.out.printf("%-6s %-38s %-9s %-8s %-9s %-14s %s%n", "ID", "Estudiante", "Presente", "Ausente", "Tardanza",
+                "Excusa médica", "Total");
+        System.out.println("-".repeat(95));
+        summary.forEach(s -> System.out.printf("%-6d %-38s %-9d %-8d %-9d %-14d %d%n", s.studentId(), s.fullName(),
+                s.present(), s.absent(), s.late(), s.medicalExcuse(), s.total()));
+        generateImportReport(year);
+    }
+
+    /** The import report is written only when the database already holds what the CSV file says. */
+    private void generateImportReport(int year) {
+        try {
+            System.out.println("\nSe generó el reporte de importación: " + attendanceImportController.generateImportReport(year));
+        } catch (BusinessException e) {
+            System.out.println("\n" + e.getMessage());
+        }
     }
 
     private void showClubOccupancy() {

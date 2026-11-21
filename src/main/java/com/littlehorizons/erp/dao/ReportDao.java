@@ -1,6 +1,6 @@
 package com.littlehorizons.erp.dao;
 
-import com.littlehorizons.erp.model.AttendanceStat;
+import com.littlehorizons.erp.model.AttendanceSummary;
 import com.littlehorizons.erp.model.ClubOccupancy;
 import com.littlehorizons.erp.model.MonthlyIncome;
 import com.littlehorizons.erp.model.StudentRanking;
@@ -14,8 +14,8 @@ public interface ReportDao {
     /** Average of every grade of each active student of the given academic year. */
     List<StudentRanking> findStudentAverages(int year);
 
-    /** Attendance totals grouped by grade. */
-    List<AttendanceStat> findAttendanceByGrade();
+    /** Attendance of each student in the given year, counted by status. */
+    List<AttendanceSummary> findAttendanceSummary(int year);
 
     /** Active clubs with their number of active members. */
     List<ClubOccupancy> findClubOccupancy();

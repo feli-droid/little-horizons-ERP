@@ -5,7 +5,8 @@ import com.littlehorizons.erp.util.InputValidator;
 /** Main menu of the application: groups the options by module. */
 public class MainMenuView {
 
-    private static final int EXIT_OPTION = 8;
+    private static final int ATTENDANCE_IMPORT_OPTION = 8;
+    private static final int EXIT_OPTION = 9;
 
     private final StudentView studentView;
     private final AcademicView academicView;
@@ -14,10 +15,12 @@ public class MainMenuView {
     private final FinancialView financialView;
     private final ResourceView resourceView;
     private final ReportView reportView;
+    private final AttendanceImportView attendanceImportView;
 
     public MainMenuView(StudentView studentView, AcademicView academicView, TeacherView teacherView,
                         ExtracurricularView extracurricularView, FinancialView financialView,
-                        ResourceView resourceView, ReportView reportView) {
+                        ResourceView resourceView, ReportView reportView,
+                        AttendanceImportView attendanceImportView) {
         this.studentView = studentView;
         this.academicView = academicView;
         this.teacherView = teacherView;
@@ -25,6 +28,7 @@ public class MainMenuView {
         this.financialView = financialView;
         this.resourceView = resourceView;
         this.reportView = reportView;
+        this.attendanceImportView = attendanceImportView;
     }
 
     public void run() {
@@ -40,6 +44,7 @@ public class MainMenuView {
                 case 5 -> financialView.run();
                 case 6 -> resourceView.run();
                 case 7 -> reportView.run();
+                case ATTENDANCE_IMPORT_OPTION -> attendanceImportView.run();
                 case EXIT_OPTION -> exit = true;
             }
         }
@@ -60,7 +65,8 @@ public class MainMenuView {
         System.out.println("5. Gestión Financiera");
         System.out.println("6. Gestión de Recursos");
         System.out.println("7. Reportes y Estadísticas");
-        System.out.println("8. Salir");
+        System.out.println("8. TEST - Importar Asistencias desde CSV");
+        System.out.println("9. Salir");
         System.out.println();
     }
 }

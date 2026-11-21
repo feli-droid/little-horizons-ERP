@@ -1,7 +1,7 @@
 package com.littlehorizons.erp.dao;
 
 import com.littlehorizons.erp.exception.DataAccessException;
-import com.littlehorizons.erp.model.AttendanceStat;
+import com.littlehorizons.erp.model.AttendanceSummary;
 import com.littlehorizons.erp.model.ClubOccupancy;
 import com.littlehorizons.erp.model.MonthlyIncome;
 import com.littlehorizons.erp.model.StudentRanking;
@@ -12,6 +12,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,12 +35,15 @@ public class JdbcReportDao implements ReportDao {
                     + "ORDER BY promedio DESC, nombre";
 
     private static final String SELECT_ATTENDANCE =
-            "SELECT g.nombre_grado, COUNT(*) AS total, "
-                    + "SUM(CASE WHEN a.estado_asistencia IN ('Presente', 'Tardanza') THEN 1 ELSE 0 END) AS asistio "
-                    + "FROM asistencias a "
-                    + "JOIN materias ma ON ma.id_materia = a.id_materia "
-                    + "JOIN grados g ON g.id_grado = ma.id_grado "
-                    + "GROUP BY g.id_grado, g.nombre_grado, g.nivel_numerico ORDER BY g.nivel_numerico";
+            "SELECT a.id_estudiante, "
+                    + "CONCAT_WS(' ', e.primer_nombre, e.segundo_nombre, e.primer_apellido, e.segundo_apellido) AS nombre, "
+                    + "SUM(CASE WHEN a.estado_asistencia = 'Presente' THEN 1 ELSE 0 END) AS presentes, "
+                    + "SUM(CASE WHEN a.estado_asistencia = 'Ausente' THEN 1 ELSE 0 END) AS ausentes, "
+                    + "SUM(CASE WHEN a.estado_asistencia = 'Tardanza' THEN 1 ELSE 0 END) AS tardanzas, "
+                    + "SUM(CASE WHEN a.estado_asistencia = 'Excusa Médica' THEN 1 ELSE 0 END) AS excusas "
+                    + "FROM asistencias a JOIN estudiantes e ON e.id_estudiante = a.id_estudiante "
+                    + "WHERE a.fecha_asistencia >= ? AND a.fecha_asistencia < ? "
+                    + "GROUP BY a.id_estudiante, nombre ORDER BY a.id_estudiante";
 
     private static final String SELECT_CLUBS =
             "SELECT c.nombre_club, CONCAT_WS(' ', p.primer_nombre, p.primer_apellido) AS supervisor, "
@@ -91,17 +95,21 @@ public class JdbcReportDao implements ReportDao {
     }
 
     @Override
-    public List<AttendanceStat> findAttendanceByGrade() {
-        List<AttendanceStat> result = new ArrayList<>();
+    public List<AttendanceSummary> findAttendanceSummary(int year) {
+        List<AttendanceSummary> result = new ArrayList<>();
         try (Connection connection = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement statement = connection.prepareStatement(SELECT_ATTENDANCE);
-             ResultSet rs = statement.executeQuery()) {
-            while (rs.next()) {
-                result.add(new AttendanceStat(rs.getString("nombre_grado"), rs.getLong("total"), rs.getLong("asistio")));
+             PreparedStatement statement = connection.prepareStatement(SELECT_ATTENDANCE)) {
+            statement.setObject(1, LocalDate.of(year, 1, 1));
+            statement.setObject(2, LocalDate.of(year + 1, 1, 1));
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new AttendanceSummary(rs.getInt("id_estudiante"), rs.getString("nombre"), rs.getLong("presentes"),
+                            rs.getLong("ausentes"), rs.getLong("tardanzas"), rs.getLong("excusas")));
+                }
             }
         } catch (SQLException e) {
-            ErrorLogger.error("Could not load attendance statistics", e);
-            throw new DataAccessException("No se pudo consultar la asistencia.", e);
+            ErrorLogger.error("Could not load the attendance summary of " + year, e);
+            throw new DataAccessException("No se pudo consultar el resumen de asistencia.", e);
         }
         return result;
     }

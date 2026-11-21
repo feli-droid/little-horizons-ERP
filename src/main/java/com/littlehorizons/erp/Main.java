@@ -1,6 +1,7 @@
 package com.littlehorizons.erp;
 
 import com.littlehorizons.erp.controller.AcademicController;
+import com.littlehorizons.erp.controller.AttendanceImportController;
 import com.littlehorizons.erp.controller.ClubController;
 import com.littlehorizons.erp.controller.EventController;
 import com.littlehorizons.erp.controller.InvoiceController;
@@ -41,6 +42,7 @@ import com.littlehorizons.erp.dao.TeacherDao;
 import com.littlehorizons.erp.util.DatabaseConnection;
 import com.littlehorizons.erp.util.ErrorLogger;
 import com.littlehorizons.erp.view.AcademicView;
+import com.littlehorizons.erp.view.AttendanceImportView;
 import com.littlehorizons.erp.view.ClubView;
 import com.littlehorizons.erp.view.EventView;
 import com.littlehorizons.erp.view.ExtracurricularView;
@@ -93,11 +95,14 @@ public class Main {
         ResourceView resourceView = new ResourceView(new ResourceController(resourceDao),
                 new LoanController(loanDao, resourceDao, studentDao, teacherDao));
 
+        AttendanceImportController attendanceImportController = new AttendanceImportController(attendanceDao);
         ReportDao reportDao = new JdbcReportDao();
-        ReportView reportView = new ReportView(new ReportController(reportDao));
+        ReportView reportView = new ReportView(new ReportController(reportDao), attendanceImportController);
+
+        AttendanceImportView attendanceImportView = new AttendanceImportView(attendanceImportController);
 
         new MainMenuView(studentView, academicView, teacherView, extracurricularView, financialView,
-                resourceView, reportView).run();
+                resourceView, reportView, attendanceImportView).run();
         ErrorLogger.info("Application finished");
     }
 

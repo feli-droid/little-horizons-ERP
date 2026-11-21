@@ -100,7 +100,12 @@ public final class InputValidator {
 
     /** Pauses until the user presses Enter. */
     public static void waitForEnter() {
-        System.out.print("\nPresione Enter para continuar...");
+        waitForEnter("\nPresione Enter para continuar...");
+    }
+
+    /** Shows the given text (it may be empty) and pauses until the user presses Enter. */
+    public static void waitForEnter(String prompt) {
+        System.out.print(prompt);
         SCANNER.nextLine();
     }
 

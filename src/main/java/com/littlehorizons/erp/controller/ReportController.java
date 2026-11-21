@@ -1,7 +1,7 @@
 package com.littlehorizons.erp.controller;
 
 import com.littlehorizons.erp.dao.ReportDao;
-import com.littlehorizons.erp.model.AttendanceStat;
+import com.littlehorizons.erp.model.AttendanceSummary;
 import com.littlehorizons.erp.model.ClubOccupancy;
 import com.littlehorizons.erp.model.MonthlyIncome;
 import com.littlehorizons.erp.model.StudentRanking;
@@ -65,8 +65,9 @@ public class ReportController {
         return result;
     }
 
-    public List<AttendanceStat> attendanceByGrade() {
-        return reportDao.findAttendanceByGrade();
+    /** Attendance of every student in the given year, ordered by student id. */
+    public List<AttendanceSummary> attendanceSummary(int year) {
+        return reportDao.findAttendanceSummary(year);
     }
 
     /** Clubs ordered from the fullest to the emptiest. */
