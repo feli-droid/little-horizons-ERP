@@ -13,6 +13,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +26,14 @@ public class JdbcAttendanceDao implements AttendanceDao {
             "INSERT INTO asistencias (id_estudiante, id_materia, fecha_asistencia, estado_asistencia, registrado_por) "
                     + "VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE estado_asistencia = VALUES(estado_asistencia), "
                     + "registrado_por = VALUES(registrado_por)";
+
+    private static final String INSERT_IMPORTED =
+            "INSERT INTO asistencias (id_estudiante, id_materia, fecha_asistencia, estado_asistencia) "
+                    + "VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE estado_asistencia = VALUES(estado_asistencia)";
+
+    private static final String STUDENT_EXISTS = "SELECT 1 FROM estudiantes WHERE id_estudiante = ?";
+
+    private static final String SUBJECT_EXISTS = "SELECT 1 FROM materias WHERE id_materia = ?";
 
     private static final String ABSENCES =
             "SELECT e.id_estudiante, e.numero_documento, "
@@ -122,5 +132,70 @@ public class JdbcAttendanceDao implements AttendanceDao {
             throw new DataAccessException("No se pudo consultar la asistencia del estudiante.", e);
         }
         return entries;
+    }
+
+    @Override
+    public Map<Integer, String> findStudentNames(Collection<Integer> studentIds) {
+        Map<Integer, String> names = new HashMap<>();
+        if (studentIds.isEmpty()) {
+            return names;
+        }
+        String sql = "SELECT id_estudiante, CONCAT_WS(' ', primer_nombre, segundo_nombre, primer_apellido, "
+                + "segundo_apellido) AS nombre FROM estudiantes WHERE id_estudiante IN ("
+                + String.join(", ", Collections.nCopies(studentIds.size(), "?")) + ")";
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            int position = 1;
+            for (int studentId : studentIds) {
+                statement.setInt(position++, studentId);
+            }
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    names.put(rs.getInt("id_estudiante"), rs.getString("nombre"));
+                }
+            }
+        } catch (SQLException e) {
+            ErrorLogger.error("Could not load the names of the students", e);
+            throw new DataAccessException("No se pudieron consultar los nombres de los estudiantes.", e);
+        }
+        return names;
+    }
+
+    @Override
+    public boolean studentExists(int studentId) {
+        return exists(STUDENT_EXISTS, studentId);
+    }
+
+    @Override
+    public boolean subjectExists(int subjectId) {
+        return exists(SUBJECT_EXISTS, subjectId);
+    }
+
+    @Override
+    public void insertImported(int studentId, int subjectId, LocalDate date, AttendanceStatus status) {
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(INSERT_IMPORTED)) {
+            statement.setInt(1, studentId);
+            statement.setInt(2, subjectId);
+            statement.setObject(3, date);
+            statement.setString(4, status.getDbValue());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            ErrorLogger.error("Could not import attendance of student " + studentId + " in subject " + subjectId, e);
+            throw new DataAccessException("No se pudo guardar la asistencia importada.", e);
+        }
+    }
+
+    private boolean exists(String sql, int id) {
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            ErrorLogger.error("Could not check the existence of id " + id, e);
+            throw new DataAccessException("No se pudo consultar la base de datos.", e);
+        }
     }
 }

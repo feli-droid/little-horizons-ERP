@@ -5,6 +5,7 @@ import com.littlehorizons.erp.model.AttendanceEntry;
 import com.littlehorizons.erp.model.AttendanceStatus;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -21,4 +22,14 @@ public interface AttendanceDao {
     List<AbsenceSummary> findAbsenceReport(LocalDate from, LocalDate to, int maxAbsences);
 
     List<AttendanceEntry> findByStudent(int studentId, LocalDate from, LocalDate to);
+
+    /** Full name of each of the given students, by student id. */
+    Map<Integer, String> findStudentNames(Collection<Integer> studentIds);
+
+    boolean studentExists(int studentId);
+
+    boolean subjectExists(int subjectId);
+
+    /** Saves one imported attendance record; the teacher who registered it stays NULL. */
+    void insertImported(int studentId, int subjectId, LocalDate date, AttendanceStatus status);
 }
